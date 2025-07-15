@@ -12,6 +12,7 @@
     "@react-three/drei": "^10.3.0",
     "@react-three/fiber": "^9.1.2",
     "@tensorflow-models/coco-ssd": "^2.2.3",
+    "@tensorflow/tfjs": "^4.22.0",
     "axios": "^1.10.0",
     "chart.js": "^4.5.0",
     "leaflet": "^1.9.4",

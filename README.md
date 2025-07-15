@@ -40,7 +40,7 @@ project-D/
 
 ---
 
-## 🧪 Tech Stack
+## 📚 Tech Stack
 
 ### Frontend:
 - ⚛️ React.js (with Vite)
@@ -51,7 +51,8 @@ project-D/
 ### Backend:
 - 🟢 Node.js
 - 📂 Express.js server (index.js)
-- 🧠 Placeholder model file: `yolov5s.pt` (integration planned)
+- ✈️ FastAPI 
+- 🧠 Placeholder model file: yolov5s.pt (integration planned)
 - 🧪 For image upload & AI inference (future scope)
 
 ---

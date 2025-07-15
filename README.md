@@ -115,7 +115,6 @@ By automating drone surveillance and threat simulation tasks, the system minimiz
 - **🛰️ GPS Integration**: Simulate and detect real-time satellite navigation manipulation or signal jamming.
 - **🔊 Sound & Voice Alerts**: Incorporate audio-based system notifications and voice command modules for improved accessibility and command execution.
 - **🧑‍✈️ Multi-Drone Swarm Control**: Enable synchronized, AI-coordinated multi-drone missions with autonomous decision-making for defense operations.
-- **🎯 AI Model Integration**: Real-time object detection using models like YOLOv5 for enhanced threat classification.
 - **📡 Real-time Data Streaming**: WebSocket-based communication for live drone telemetry and feed processing.
 
 ---

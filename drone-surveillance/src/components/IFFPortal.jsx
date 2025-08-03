@@ -247,7 +247,7 @@ const IFFPortal = () => {
         {/* Header */}
         <div style={{ marginBottom: '30px' }}>
           <h1 style={{ margin: '0 0 10px 0', fontSize: 'clamp(1.5rem, 4vw, 2.5rem)' }}>
-            🎯 IFF (Identify Friend or Foe) System
+            IFF (Identify Friend or Foe) System
           </h1>
           <p style={{ margin: 0, color: '#94a3b8', fontSize: 'clamp(0.8rem, 2vw, 1rem)' }}>
             Advanced Target Identification and Classification System
@@ -262,10 +262,10 @@ const IFFPortal = () => {
           flexWrap: 'wrap'
         }}>
           {[
-            { id: 'overview', label: '📊 Overview' },
-            { id: 'targets', label: '🎯 Targets' },
-            { id: 'scanning', label: '🔍 Scanning' },
-            { id: 'classification', label: '🏷️ Classification' }
+            { id: 'overview', label: 'Overview' },
+            { id: 'targets', label: 'Targets' },
+            { id: 'scanning', label: 'Scanning' },
+            { id: 'classification', label: 'Classification' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -327,7 +327,7 @@ const IFFPortal = () => {
               border: '1px solid rgba(148, 163, 184, 0.1)',
               marginBottom: '30px'
             }}>
-              <h3 style={{ marginBottom: '20px' }}>🟢 Friendly Assets</h3>
+              <h3 style={{ marginBottom: '20px', color:'#10b981'}}>Friendly Assets</h3>
               <div style={{ display: 'grid', gap: '15px' }}>
                 {drones.map(drone => (
                   <div key={drone.id} style={{
@@ -373,7 +373,7 @@ const IFFPortal = () => {
               borderRadius: '12px',
               border: '1px solid rgba(148, 163, 184, 0.1)'
             }}>
-              <h3 style={{ marginBottom: '20px' }}>🟡 Unknown Targets</h3>
+              <h3 style={{ marginBottom: '20px', color: '#f59e0b' }}>Unknown Targets</h3>
               <div style={{ display: 'grid', gap: '15px' }}>
                 {targets.filter(t => t.iff === 'unknown').map(target => (
                   <div key={target.id} style={{
@@ -540,7 +540,7 @@ const IFFPortal = () => {
                         fontSize: '0.9em'
                       }}
                     >
-                      🟢 Mark as Friend
+                      Mark as Friend
                     </button>
                     <button
                       onClick={() => tagTarget(target.id, 'foe')}
@@ -554,7 +554,7 @@ const IFFPortal = () => {
                         fontSize: '0.9em'
                       }}
                     >
-                      🔴 Mark as Foe
+                      Mark as Foe
                     </button>
                     <button
                       onClick={() => tagTarget(target.id, 'neutral')}
@@ -568,7 +568,7 @@ const IFFPortal = () => {
                         fontSize: '0.9em'
                       }}
                     >
-                      ⚪ Mark as Neutral
+                      Mark as Neutral
                     </button>
                   </div>
                 </div>
@@ -604,7 +604,7 @@ const IFFPortal = () => {
                   fontWeight: '600'
                 }}
               >
-                {isScanning ? '🔍 Scanning...' : '🔍 Start Active Scan'}
+                {isScanning ? '🔍 Scanning...' : 'Start Active Scan'}
               </button>
             </div>
 
@@ -749,7 +749,7 @@ const IFFPortal = () => {
                   fontWeight: '600'
                 }}
               >
-                🏷️ Apply Classification
+                Apply Classification
               </button>
             </div>
 

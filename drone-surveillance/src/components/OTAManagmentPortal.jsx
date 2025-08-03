@@ -176,7 +176,7 @@ const OTAManagementPortal = () => {
         {/* Header */}
         <div style={{ marginBottom: '30px' }}>
           <h1 style={{ margin: '0 0 10px 0', fontSize: 'clamp(1.5rem, 4vw, 2.5rem)' }}>
-            🔄 OTA Management Portal
+            OTA Management Portal
           </h1>
           <p style={{ margin: 0, color: '#94a3b8', fontSize: 'clamp(0.8rem, 2vw, 1rem)' }}>
             Over-the-Air Firmware & Model Updates Management
@@ -220,10 +220,10 @@ const OTAManagementPortal = () => {
           flexWrap: 'wrap'
         }}>
           {[
-            { id: 'overview', label: '📊 Overview' },
-            { id: 'deployment', label: '🚀 Deployment' },
-            { id: 'firmware', label: '📦 Firmware' },
-            { id: 'monitoring', label: '📈 Monitoring' }
+            { id: 'overview', label: 'Overview' },
+            { id: 'deployment', label: 'Deployment' },
+            { id: 'firmware', label: 'Firmware' },
+            { id: 'monitoring', label: 'Monitoring' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -343,7 +343,7 @@ const OTAManagementPortal = () => {
                   fontWeight: '600'
                 }}
               >
-                🚀 Start Deployment
+                Start Deployment
               </button>
             </div>
 
@@ -389,7 +389,7 @@ const OTAManagementPortal = () => {
                         marginTop: '10px'
                       }}
                     >
-                      🔄 Rollback
+                      Rollback
                     </button>
                   )}
                 </div>
@@ -443,7 +443,7 @@ const OTAManagementPortal = () => {
                   fontWeight: '600'
                 }}
               >
-                📤 Upload Firmware
+                Upload Firmware
               </button>
             </div>
 
@@ -464,7 +464,7 @@ const OTAManagementPortal = () => {
                         Size: {fw.size} • Type: {fw.type}
                       </div>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
+                    <div>
                       <div style={{
                         padding: '4px 8px',
                         borderRadius: '4px',
@@ -481,8 +481,8 @@ const OTAManagementPortal = () => {
                     </div>
                   </div>
                   
-                  <div>
-                    <strong style={{ fontSize: '0.9em' }}>Features:</strong>
+                  <div style={{textAlign: 'justify', color: '#94a3b8', fontSize: '0.9em' }}>
+                    <strong style={{ fontSize: '1.2em' }}>Features:</strong>
                     <ul style={{ margin: '5px 0 0 20px', color: '#94a3b8', fontSize: '0.9em' }}>
                       {fw.features.map((feature, idx) => (
                         <li key={idx}>{feature}</li>

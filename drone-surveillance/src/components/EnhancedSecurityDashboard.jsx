@@ -105,9 +105,9 @@ const EnhancedSecurityDashboard = () => {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>
-            🛡️ Enhanced Security Dashboard
+            {/* 🛡️ Enhanced Security Dashboard */}
           </h1>
-          <p style={{ margin: 0, color: '#94a3b8', fontSize: 'clamp(0.8rem, 2vw, 1rem)' }}>
+          <p style={{ margin: 0, color: '#94a3b8', fontSize: 'clamp(0.8rem, 2vw, 1rem)', textAlign: 'left' }}>
             Real-time Security Monitoring & Encryption Management
           </p>
         </div>
@@ -120,10 +120,10 @@ const EnhancedSecurityDashboard = () => {
           flexWrap: 'wrap'
         }}>
           {[
-            { id: 'overview', label: '📊 Overview' },
-            { id: 'encryption', label: '🔒 Encryption' },
-            { id: 'threats', label: '⚠️ Threats' },
-            { id: 'events', label: '📋 Events' }
+            { id: 'overview', label: 'Status' },
+            { id: 'encryption', label: 'Encryption' },
+            { id: 'threats', label: 'Threats' },
+            { id: 'events', label: 'Events' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -150,7 +150,7 @@ const EnhancedSecurityDashboard = () => {
         {activeTab === 'overview' && (
           <div>
             {/* Security Status Cards */}
-            <div style={{
+            {/* <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
               gap: '20px',
@@ -206,7 +206,7 @@ const EnhancedSecurityDashboard = () => {
                   <div style={{ color: '#64748b', fontSize: '0.9em' }}>{metric.subtitle}</div>
                 </div>
               ))}
-            </div>
+            </div> */}
 
             {/* Quick Actions */}
             <div style={{
@@ -216,7 +216,7 @@ const EnhancedSecurityDashboard = () => {
               border: '1px solid rgba(148, 163, 184, 0.1)',
               marginBottom: '30px'
             }}>
-              <h3 style={{ marginBottom: '20px' }}>🚀 Quick Actions</h3>
+              <h3 style={{ marginBottom: '20px' }}>Quick Actions</h3>
               <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
                 <button
                   onClick={startSecurityScan}
@@ -234,7 +234,7 @@ const EnhancedSecurityDashboard = () => {
                     fontWeight: '600'
                   }}
                 >
-                  {isScanning ? `🔍 Scanning... ${scanProgress}%` : '🔍 Start Security Scan'}
+                  {isScanning ? `🔍 Scanning... ${scanProgress}%` : 'Start Security Scan'}
                 </button>
                 
                 <button
@@ -250,7 +250,7 @@ const EnhancedSecurityDashboard = () => {
                     fontWeight: '600'
                   }}
                 >
-                  🔒 Encryption Status
+                  Encryption Status
                 </button>
 
                 <button
@@ -266,7 +266,7 @@ const EnhancedSecurityDashboard = () => {
                     fontWeight: '600'
                   }}
                 >
-                  ⚠️ View Threats
+                  View Threats
                 </button>
               </div>
             </div>

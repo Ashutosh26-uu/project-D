@@ -74,7 +74,7 @@ const SecurityVerificationPortal = () => {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      // minHeight: '100vh',
       background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
       color: '#f1f5f9',
       padding: '20px'
@@ -89,7 +89,7 @@ const SecurityVerificationPortal = () => {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>
-            🔍 Security Verification Portal
+            Security Dashboard
           </h1>
           <p style={{ margin: 0, color: '#94a3b8', fontSize: 'clamp(0.8rem, 2vw, 1rem)' }}>
             Military-Grade Encryption Verification & Security Compliance Monitoring
@@ -104,10 +104,10 @@ const SecurityVerificationPortal = () => {
           flexWrap: 'wrap'
         }}>
           {[
-            { id: 'overview', label: '📊 Overview' },
-            { id: 'encryption', label: '🔒 Encryption Status' },
-            { id: 'compliance', label: '🛡️ Compliance' },
-            { id: 'verification', label: '🔍 Data Verification' }
+            { id: 'overview', label: 'Overview' },
+            { id: 'encryption', label: 'Encryption Status' },
+            { id: 'compliance', label: 'Compliance' },
+            { id: 'verification', label: 'Data Verification' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -200,7 +200,7 @@ const SecurityVerificationPortal = () => {
               border: '1px solid rgba(148, 163, 184, 0.1)',
               marginBottom: '30px'
             }}>
-              <h3 style={{ marginBottom: '20px' }}>🚀 Quick Actions</h3>
+              <h3 style={{ marginBottom: '20px' }}>Quick Actions</h3>
               <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
                 <button
                   onClick={runFullSecurityAudit}
@@ -215,7 +215,7 @@ const SecurityVerificationPortal = () => {
                     fontWeight: '600'
                   }}
                 >
-                  🔍 Run Full Security Audit
+                  Run Full Security Audit
                 </button>
                 
                 <button
@@ -231,7 +231,7 @@ const SecurityVerificationPortal = () => {
                     fontWeight: '600'
                   }}
                 >
-                  🔒 Test Encryption
+                  Test Encryption
                 </button>
               </div>
             </div>
@@ -244,7 +244,7 @@ const SecurityVerificationPortal = () => {
                 borderRadius: '12px',
                 border: '1px solid rgba(148, 163, 184, 0.1)'
               }}>
-                <h3 style={{ marginBottom: '20px' }}>🔬 Encryption Test Results</h3>
+                <h3 style={{ marginBottom: '20px' }}>Encryption Test Results</h3>
                 <div style={{ display: 'grid', gap: '20px' }}>
                   <div>
                     <h4 style={{ marginBottom: '10px', color: '#10b981' }}>Original Data</h4>
@@ -305,7 +305,7 @@ const SecurityVerificationPortal = () => {
                 </div>
               </div>
             )}
-          </div>
+          </div>          
         )}
 
         {/* Encryption Status Tab */}

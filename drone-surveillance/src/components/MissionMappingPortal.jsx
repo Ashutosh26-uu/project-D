@@ -157,7 +157,7 @@ const MissionMappingPortal = () => {
             { id: 'map', label: '🗺️ Live Map' },
             { id: 'missions', label: '🎯 Missions' },
             // { id: 'planning', label: '📋 Planning' },
-            { id: 'analytics', label: '📊 Analytics' }
+            // { id: 'analytics', label: '📊 Analytics' }
           ].map(tab => (
             <button
               key={tab.id}

@@ -204,6 +204,15 @@ export default function AIOutputPortal() {
       fontFamily: 'Arial, sans-serif'
     }}>
       {/* Enhanced Header */}
+      <h1 style={{
+        color: '#00d4ff',
+        fontSize: isMobile ? '20px' : '28px',
+        textShadow: '0 0 10px #00d4ff40',
+        marginTop: '0px',      
+        marginBottom: '10px' 
+      }}>
+        Results
+      </h1>
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -213,14 +222,6 @@ export default function AIOutputPortal() {
         gap: '10px'
       }}>
         <div>
-          <h1 style={{
-            color: '#00d4ff',
-            margin: '0 0 5px 0',
-            fontSize: isMobile ? '20px' : '28px',
-            textShadow: '0 0 10px #00d4ff40'
-          }}>
-            🤖 AI Output Portal
-          </h1>
           <div style={{
             color: '#00ff88',
             fontSize: isMobile ? '12px' : '14px',

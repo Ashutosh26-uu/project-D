@@ -274,9 +274,16 @@ function App() {
       case 'analytics':
         return <AnalyticsDashboard />
       case 'ai-detection':
-        return <AIDescriptionUpload />
-      case 'ai-output':
-        return <AIOutputPortal />
+        // return <AIDescriptionUpload />
+        return (
+          <div>
+            <h1 style={{ marginTop: "20px" }}>AI Detection Portal</h1>
+            <AIDescriptionUpload/>
+            <AIOutputPortal />
+          </div>
+        );
+      // case 'ai-output':
+      //   return <AIOutputPortal />
       case 'mission-mapping':
         return <MissionMappingPortal />
       case 'security':
@@ -289,8 +296,8 @@ function App() {
         return <EmergencyControlsPortal />
       case 'integration':
         return <IntegrationPortal />
-      case 'swarm-ai-sync':
-        return <SwarmAISyncPortal />
+      // case 'swarm-ai-sync':
+      //   return <SwarmAISyncPortal />
       case 'iff':
         return <IFFPortal />
       case 'ota-management':
@@ -300,7 +307,12 @@ function App() {
       case 'simulation':
         return <SimulationPortal />;
       case 'swarmVisualizer':
-        return <SwarmVisualizerPortal />;
+        return (
+          <div>
+            <SwarmVisualizerPortal />
+            <SwarmAISyncPortal />
+          </div>
+        );
       case 'autonomous-radio':
         return <AutonomousRadioSystem />;
       case 'enhanced-security':
@@ -346,24 +358,24 @@ function App() {
             📹 Video Detection
           </button>
 
-          <button
+          {/* <button
             className={`nav-button ${currentView === 'map' ? 'active' : ''}`}
             onClick={() => setCurrentView('map')}
           >
             🗺️ Surveillance Map
-          </button>
+          </button> */}
           <button
             className={`nav-button ${currentView === 'thermal' ? 'active' : ''}`}
             onClick={() => setCurrentView('thermal')}
           >
             🔥 Thermal View
           </button>
-          <button
+          {/* <button
             className={`nav-button ${currentView === 'alerts' ? 'active' : ''}`}
             onClick={() => setCurrentView('alerts')}
           >
             🚨 Alerts
-          </button>
+          </button> */}
           <button
             className={`nav-button ${currentView === 'controls' ? 'active' : ''}`}
             onClick={() => setCurrentView('controls')}
@@ -400,11 +412,18 @@ function App() {
           </button>
 
           <button
+            className={`nav-button ${currentView === 'swarmVisualizer' ? 'active' : ''}`}
+            onClick={() => setCurrentView('swarmVisualizer')}
+          >
+            🌐 Swarm Coordination
+          </button>
+
+          {/* <button
             className={`nav-button ${currentView === 'swarm-ai-sync' ? 'active' : ''}`}
             onClick={() => setCurrentView('swarm-ai-sync')}
           >
             🧬 Swarm AI Sync
-          </button>
+          </button> */}
 
           <button
             className={`nav-button ${currentView === 'mission-mapping' ? 'active' : ''}`}
@@ -434,12 +453,12 @@ function App() {
             🛠️ Firmware Management
           </button>
 
-          <button
+          {/* <button
             className={`nav-button ${currentView === 'swarmVisualizer' ? 'active' : ''}`}
             onClick={() => setCurrentView('swarmVisualizer')}
           >
             🌐 Swarm Visualizer & Coordination
-          </button>
+          </button> */}
 
           <button
             className={`nav-button ${currentView === 'integration' ? 'active' : ''}`}
@@ -461,12 +480,12 @@ function App() {
           >
             🤖 AI Detection
           </button>
-          <button
+          {/* <button
             className={`nav-button ${currentView === 'ai-output' ? 'active' : ''}`}
             onClick={() => setCurrentView('ai-output')}
           >
             🧠 AI Output
-          </button>
+          </button> */}
           {/* <button
             className={`nav-button ${currentView === 'mission-mapping' ? 'active' : ''}`}
             onClick={() => setCurrentView('mission-mapping')}

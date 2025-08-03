@@ -22,7 +22,7 @@ export default function SwarmAISyncPortal() {
 
   return (
     <div className="dashboard-panel" style={{ minWidth: 400, maxWidth: 900, margin: '0 auto' }}>
-      <h2>Swarm AI Sync Portal</h2>
+      <h2>Sync Control</h2>
       <p style={{ color: '#888', marginBottom: 12 }}>Swarm-level AI coordination, status, and sync actions</p>
       <table className="dashboard-table" style={{ width: '100%', minWidth: 600 }}>
         <thead>

@@ -1,20 +1,21 @@
 .dashboard-container {
   min-height: 100vh;
-  min-width: 100vw;
-  max-width: 100vw;
+  width: 100%;
   box-sizing: border-box;
   padding: clamp(1rem, 4vw, 2.5rem);
   background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
   overflow-x: hidden;
+  position: relative;
 }
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(clamp(320px, 28vw, 480px), 1fr));
-  gap: clamp(1.2rem, 2vw, 2.5rem);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: clamp(1rem, 2vw, 2rem);
   width: 100%;
-  max-width: 100vw;
-  grid-auto-rows: minmax(clamp(180px, 22vh, 320px), auto);
+  margin: 0 auto;
+  grid-auto-rows: minmax(180px, auto);
+  max-width: 100%;
 }
 
 .dashboard-panel {

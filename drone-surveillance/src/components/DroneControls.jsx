@@ -184,67 +184,88 @@ const DroneControls = ({ droneStatus, setDroneStatus, systemStatus, onActivateJa
   }
 
   return (
-    <div className="drone-controls">
+    <div className="drone-controls" style={{ margin: '20px 30px 40px 20px' }}>
       <div className="controls-header">
-        <h3>🛸 Advanced Drone Control System</h3>
+        <h1 style={{margin:'20px 0'}}> Advanced Drone Control System</h1>
         <div className="control-mode">
-          <span>Mode:</span>
-          <div className="mode-indicator">
-            <button 
-              className={`mode-btn ${controlMode === 'auto' ? 'active' : ''}`}
-              onClick={() => setControlMode('auto')}
-            >
-              AUTO
-            </button>
-            <button 
-              className={`mode-btn ${controlMode === 'manual' ? 'active' : ''}`}
-              onClick={() => setControlMode('manual')}
-            >
-              MANUAL
-            </button>
-            <button 
-              className={`mode-btn ${controlMode === 'emergency' ? 'active' : ''}`}
-              onClick={() => setControlMode('emergency')}
-            >
-              EMERGENCY
-            </button>
+          <div style={{ textAlign: 'left' }}>
+            <span>Mode:</span>
+            <span style={{ margin: '20px 30px 40px 20px' }}>
+              <button 
+                className={`mode-btn ${controlMode === 'auto' ? 'active' : ''}`}
+                onClick={() => setControlMode('auto')}
+                style={{ margin: '0 10px' }}
+              >
+                AUTO
+              </button>
+              <button 
+                className={`mode-btn ${controlMode === 'manual' ? 'active' : ''}`}
+                onClick={() => setControlMode('manual')}
+                style={{ margin: '0 10px' }}
+              >
+                MANUAL
+              </button>
+              <button 
+                className={`mode-btn ${controlMode === 'emergency' ? 'active' : ''}`}
+                onClick={() => setControlMode('emergency')}
+                style={{ margin: '0 10px' }}
+              >
+                EMERGENCY
+              </button>
+            </span>
           </div>
         </div>
       </div>
 
       <div className="controls-grid">
         {/* Basic Flight Controls */}
-        <div className="control-section">
+        <div className="control-section" style={{margin: '30px 10px'}}>
           <h4>🚁 Flight Controls</h4>
-          <div className="control-buttons">
+          <span 
+            style={{
+              display: 'flex',
+              gap: '12px',         // space between buttons
+              alignItems: 'center' // optional: vertical centering
+            }}
+          >
             <button 
               className={`control-btn takeoff ${actionStatus.takeoff ? 'active' : ''}`}
               onClick={handleTakeoff}
               disabled={actionStatus.takeoff || !droneStatus.isActive}
+              style={{ margin: '10px 0' }}
             >
               {actionStatus.takeoff ? '🚁 TAKING OFF...' : '🚁 Takeoff'}
             </button>
+
             <button 
               className={`control-btn land ${actionStatus.land ? 'active' : ''}`}
               onClick={handleLanding}
               disabled={actionStatus.land || !droneStatus.isActive}
+              style={{ margin: '10px 0' }}
             >
               {actionStatus.land ? '🛬 LANDING...' : '🛬 Land'}
             </button>
+
             <button 
               className={`control-btn emergency ${actionStatus.emergency ? 'active' : ''}`}
               onClick={handleEmergencyStop}
               disabled={actionStatus.emergency}
+              style={{ margin: '10px 0' }}
             >
               {actionStatus.emergency ? '🚨 EMERGENCY...' : '🚨 Emergency Stop'}
             </button>
-          </div>
+          </span>
         </div>
 
         {/* Mission Controls */}
         <div className="control-section">
           <h4>🎯 Mission Controls</h4>
-          <div className="control-buttons">
+          <span style={{
+              'margin-top': '10px',
+              display: 'flex',
+              gap: '12px',         // space between buttons
+              alignItems: 'center' // optional: vertical centering
+            }}>
             <button 
               className={`control-btn patrol ${actionStatus.patrol ? 'active' : ''}`}
               onClick={handleStartPatrol}
@@ -266,7 +287,7 @@ const DroneControls = ({ droneStatus, setDroneStatus, systemStatus, onActivateJa
             >
               {actionStatus.return ? '🏠 RETURNING...' : '🏠 Return to Base'}
             </button>
-          </div>
+          </span>
         </div>
 
         {/* Advanced Military Controls */}

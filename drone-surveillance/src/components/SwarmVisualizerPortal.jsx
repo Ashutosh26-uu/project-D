@@ -786,8 +786,8 @@ const SwarmVisualizerPortal = () => {
     <div
       style={{
         padding: isMobile ? '10px' : '20px',
-        backgroundColor: '#0a0a1a',
-        minHeight: '100vh',
+        // backgroundColor: '#0a0a1a',
+        // minHeight: '100vh',
         color: '#ffffff',
         fontFamily: 'Arial, sans-serif'
       }}
@@ -803,14 +803,16 @@ const SwarmVisualizerPortal = () => {
         flexWrap: 'wrap',
         gap: '10px'
       }}>
+        
         <div>
           <h1 style={{
             color: '#00d4ff',
-            margin: '0 0 5px 0',
+            margin: '10px 0px',
             fontSize: isMobile ? '20px' : '28px',
-            textShadow: '0 0 10px #00d4ff40'
+            textShadow: '0 0 10px #00d4ff40',
+            alighnItems: 'center',
           }}>
-            Swarm Visualizer & Coordination Portal
+            Swarm Coordination Portal
           </h1>
           <div style={{
             color: '#00ff88',

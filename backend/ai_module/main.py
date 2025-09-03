@@ -1,4 +1,4 @@
-yfrom fastapi import FastAPI, File, UploadFile, Form, Depends, HTTPException, status
+from fastapi import FastAPI, File, UploadFile, Form, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
@@ -286,8 +286,11 @@ async def health_check():
         logger.error(f"Model health check failed: {e}")
         model_status = "error"
     
+    # Return unhealthy status if model has errors
+    status_value = "healthy" if model_status != "error" else "unhealthy"
+    
     return HealthResponse(
-        status="healthy",
+        status=status_value,
         timestamp=datetime.utcnow().isoformat(),
         version="2.0.0",
         model_status=model_status

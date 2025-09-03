@@ -10,7 +10,7 @@ import secrets
 import time
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, asdict
 import json
@@ -119,7 +119,9 @@ class AdvancedSecurity:
     
     def _initialize_default_users(self):
         """Initialize default users for the system"""
-        admin_password = self._hash_password("Admin@Drone2024!")
+        # Use environment variable for admin password
+        admin_password_plain = os.getenv('ADMIN_PASSWORD', 'DefaultSecurePassword123!')
+        admin_password = self._hash_password(admin_password_plain)
         
         self.users = {
             "admin": User(
@@ -297,17 +299,14 @@ class AdvancedSecurity:
                     user.locked_until = None
                     user.failed_attempts = 0
             
-            # Verify password (for demo, use simple check)
-            if username == "admin" and password == "Admin@Drone2024!":
-                password_correct = True
-            elif username == "operator" and password == "Operator@Drone2024!":
-                password_correct = True
-            elif username == "analyst" and password == "Analyst@Drone2024!":
-                password_correct = True
-            elif username == "viewer" and password == "Viewer@Drone2024!":
-                password_correct = True
+            # Use proper password verification with stored hashes
+            stored_password_hash = getattr(user, 'password_hash', None)
+            if stored_password_hash:
+                password_correct = self._verify_password(password, stored_password_hash)
             else:
-                password_correct = False
+                # Fallback for demo - use environment variables
+                expected_password = os.getenv(f'{username.upper()}_PASSWORD', 'DefaultPassword123!')
+                password_correct = password == expected_password
             
             if not password_correct:
                 user.failed_attempts += 1
@@ -333,7 +332,7 @@ class AdvancedSecurity:
             
             # Reset failed attempts on successful login
             user.failed_attempts = 0
-            user.last_login = datetime.utcnow().isoformat()
+            user.last_login = datetime.now(timezone.utc).isoformat()
             
             # Generate token
             token = self._generate_token(user.id, user.role, user.permissions)
@@ -345,8 +344,8 @@ class AdvancedSecurity:
                 "token": token,
                 "ip_address": ip_address,
                 "user_agent": user_agent,
-                "created_at": datetime.utcnow().isoformat(),
-                "last_activity": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "last_activity": datetime.now(timezone.utc).isoformat()
             }
             
             self._log_security_event(

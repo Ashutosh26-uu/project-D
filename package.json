@@ -1,4 +1,14 @@
 {
+  "name": "drone-surveillance-system",
+  "version": "1.0.0",
+  "description": "Advanced Drone Surveillance System",
+  "scripts": {
+    "build": "cd drone-surveillance && npm install && npm run build",
+    "start": "cd drone-surveillance && npm run dev",
+    "install-all": "cd drone-surveillance && npm install && cd ../backend && npm install",
+    "dev": "concurrently \"cd backend && npm run dev\" \"cd drone-surveillance && npm run dev\"",
+    "vercel-build": "cd drone-surveillance && npm run build"
+  },
   "dependencies": {
     "@react-three/drei": "^10.4.0",
     "@react-three/fiber": "^9.1.4",
@@ -8,5 +18,12 @@
     "crypto-js": "^4.2.0",
     "three": "^0.178.0",
     "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "vite": "^7.1.2",
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

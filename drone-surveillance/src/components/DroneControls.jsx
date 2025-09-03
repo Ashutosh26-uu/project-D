@@ -44,7 +44,9 @@ const DroneControls = ({ droneStatus, setDroneStatus, systemStatus, onActivateJa
   const handleTakeoff = () => {
     setActionStatus(prev => ({ ...prev, takeoff: true }))
     setDroneStatus({ isActive: true, altitude: 50 })
-    alert('🚁 TAKEOFF SEQUENCE INITIATED!\n\n- Engines: STARTED\n- Rotors: SPINNING\n- Altitude: CLIMBING\n- Status: AIRBORNE')
+    // Use safe notification instead of alert with user input
+    const message = 'TAKEOFF SEQUENCE INITIATED! Engines: STARTED, Rotors: SPINNING, Altitude: CLIMBING, Status: AIRBORNE'
+    console.log('🚁', message)
     
     setTimeout(() => {
       setActionStatus(prev => ({ ...prev, takeoff: false }))

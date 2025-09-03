@@ -120,17 +120,32 @@ class SecurityManager:
         return health_status
     
     def rate_limit_check(self, user_id: str, action: str) -> bool:
-        """Check rate limiting for user actions"""
+        """Check rate limiting for user actions with atomic operations"""
         key = f"rate_limit:{user_id}:{action}"
-        current_count = self.redis_client.get(key)
         
-        if current_count and int(current_count) > 100:  # 100 requests per hour
-            return False
+        # Use Redis pipeline for atomic operations to prevent race conditions
+        pipe = self.redis_client.pipeline()
+        pipe.multi()
         
-        # Increment counter
-        self.redis_client.incr(key)
-        self.redis_client.expire(key, 3600)  # Expire in 1 hour
-        return True
+        try:
+            # Watch the key for changes
+            pipe.watch(key)
+            current_count = self.redis_client.get(key)
+            
+            if current_count and int(current_count) > 100:  # 100 requests per hour
+                pipe.unwatch()
+                return False
+            
+            # Atomic increment and expire
+            pipe.incr(key)
+            pipe.expire(key, 3600)  # Expire in 1 hour
+            pipe.execute()
+            
+            return True
+            
+        except redis.WatchError:
+            # Key was modified during transaction, retry
+            return self.rate_limit_check(user_id, action)
 
 # Initialize security manager
 security_manager = SecurityManager()

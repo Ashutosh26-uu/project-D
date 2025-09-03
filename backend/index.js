@@ -7,6 +7,7 @@ const WebSocket = require('ws');
 require('dotenv').config();
 const mongoose = require('mongoose');
 const axios = require('axios');
+const { authenticateToken, csrfProtection, sanitizeInput } = require('./middleware/auth');
 
 // Connect to MongoDB
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/drone_fleet';
@@ -55,7 +56,7 @@ wss.on('connection', (ws, req) => {
   ws.on('message', async (message) => {
     try {
       const data = JSON.parse(message);
-      console.log('WebSocket message received:', data.type);
+      console.log('WebSocket message received:', encodeURIComponent(data.type || 'unknown'));
 
       switch (data.type) {
         case 'service_registration':
@@ -92,7 +93,7 @@ wss.on('connection', (ws, req) => {
 // Service registration handler
 function handleServiceRegistration(ws, data) {
   const { service, port } = data;
-  console.log(`Service registered: ${service} on port ${port}`);
+  console.log(`Service registered: ${encodeURIComponent(service)} on port ${port}`);
 
   // Store service connection
   if (!global.serviceConnections) {
@@ -202,7 +203,7 @@ async function storeDetectionResults(droneId, detections) {
 // Trigger threat response
 async function triggerThreatResponse(droneId, threats) {
   try {
-    console.log(`High threat detected by drone ${droneId}:`, threats);
+    console.log(`High threat detected by drone ${encodeURIComponent(droneId)}:`, JSON.stringify(threats));
 
     // Notify security layer
     await axios.post(`${serviceUrls.securityLayer}/threat-alert`, {
@@ -260,7 +261,16 @@ function cleanupConnections(ws) {
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(sanitizeInput); // Apply input sanitization globally
 app.use('/uploads', express.static('uploads'));
+
+// CSRF token generation endpoint
+app.get('/api/csrf-token', (req, res) => {
+  const token = require('crypto').randomBytes(32).toString('hex');
+  req.session = req.session || {};
+  req.session.csrfToken = token;
+  res.json({ csrfToken: token });
+});
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -327,7 +337,7 @@ app.get('/', (req, res) => {
 });
 
 // AI Detection endpoint (per-drone, via FastAPI)
-app.post('/api/detect', upload.single('image'), async (req, res) => {
+app.post('/api/detect', authenticateToken, upload.single('image'), async (req, res) => {
   try {
     const { droneId, lat, lng, timestamp } = req.body;
     if (!req.file) {
@@ -452,7 +462,7 @@ app.get('/api/analytics/historical', (req, res) => {
 });
 
 // Defense Systems endpoints
-app.get('/api/defense/status', (req, res) => {
+app.get('/api/defense/status', authenticateToken, (req, res) => {
   const defenseStatus = {
     airDefense: {
       active: true,
@@ -489,7 +499,7 @@ app.get('/api/defense/status', (req, res) => {
   res.json(defenseStatus);
 });
 
-app.post('/api/defense/activate', (req, res) => {
+app.post('/api/defense/activate', authenticateToken, csrfProtection, (req, res) => {
   const { system } = req.body;
   console.log(`Activating ${system} system`);
 
@@ -525,8 +535,11 @@ app.get('/api/security/health', (req, res) => {
 app.post('/api/security/login', (req, res) => {
   const { username, password } = req.body;
 
-  // Simple authentication (in production, use proper auth)
-  if (username === 'admin' && password === 'password') {
+  // Use environment variables for credentials
+  const adminUsername = process.env.ADMIN_USERNAME || 'admin';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'defaultPassword123!';
+  
+  if (username === adminUsername && password === adminPassword) {
     const token = 'mock-jwt-token-' + Date.now();
     res.json({
       success: true,
@@ -749,9 +762,12 @@ app.get('/api/missions/:id/export', (req, res) => {
 
 // Security/Access: Login, roles, access log
 app.post('/api/auth/login', (req, res) => {
-  // Mock: login
+  // Mock: login with environment variables
   const { username, password } = req.body;
-  if (username === 'admin' && password === 'admin') {
+  const adminUsername = process.env.ADMIN_USERNAME || 'admin';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'defaultPassword123!';
+  
+  if (username === adminUsername && password === adminPassword) {
     res.json({ success: true, token: 'mock-jwt-token', role: 'Commander' });
   } else {
     res.status(401).json({ success: false, message: 'Invalid credentials' });

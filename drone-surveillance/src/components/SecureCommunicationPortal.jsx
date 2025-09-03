@@ -22,10 +22,10 @@ const SecureCommunicationPortal = () => {
   ]);
   
   const [recipients] = useState([
-    { id: 'user1', name: 'Commander Smith', role: 'Command', clearance: 'Top Secret' },
-    { id: 'user2', name: 'Operator Johnson', role: 'Field', clearance: 'Secret' },
-    { id: 'user3', name: 'Analyst Davis', role: 'Intelligence', clearance: 'Top Secret' },
-    { id: 'user4', name: 'Technician Wilson', role: 'Technical', clearance: 'Secret' }
+    { id: 'user1', name: 'Commander Alpha', role: 'Command', clearance: 'Top Secret' },
+    { id: 'user2', name: 'Operator Beta', role: 'Field', clearance: 'Secret' },
+    { id: 'user3', name: 'Analyst Gamma', role: 'Intelligence', clearance: 'Top Secret' },
+    { id: 'user4', name: 'Technician Delta', role: 'Technical', clearance: 'Secret' }
   ]);
 
   const [communicationLogs, setCommunicationLogs] = useState([]);

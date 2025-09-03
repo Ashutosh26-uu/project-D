@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
+import threading
+import time
 
 app = FastAPI()
 
@@ -24,8 +26,9 @@ class LatencyReport(BaseModel):
 class BufferStateRequest(BaseModel):
     drone_id: str
 
-# In-memory buffer state (stub)
+# Thread-safe in-memory buffer state
 buffer_states = {}
+buffer_lock = threading.Lock()
 
 @app.get("/health")
 def health():
@@ -33,14 +36,19 @@ def health():
 
 @app.post("/report-latency")
 def report_latency(report: LatencyReport):
-    # Store or process latency (stub)
-    buffer_states[report.drone_id] = {"latency_ms": report.latency_ms, "timestamp": report.timestamp}
+    # Thread-safe store or process latency
+    with buffer_lock:
+        buffer_states[report.drone_id] = {
+            "latency_ms": report.latency_ms, 
+            "timestamp": report.timestamp or time.time()
+        }
     return {"status": "received", "drone_id": report.drone_id}
 
 @app.post("/buffer-state")
 def buffer_state(req: BufferStateRequest):
-    # Return buffer state (stub)
-    state = buffer_states.get(req.drone_id, {"latency_ms": None, "timestamp": None})
+    # Thread-safe return buffer state
+    with buffer_lock:
+        state = buffer_states.get(req.drone_id, {"latency_ms": None, "timestamp": None})
     return {"drone_id": req.drone_id, "buffer_state": state}
 
 if __name__ == "__main__":

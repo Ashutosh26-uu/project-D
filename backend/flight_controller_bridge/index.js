@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 require('dotenv').config();
+const { sanitizeInput } = require('./middleware/security');
 
 const app = express();
 const PORT = process.env.PORT || 5100;
@@ -10,6 +11,7 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://backend:5000';
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(sanitizeInput);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -22,7 +24,7 @@ app.get('/health', (req, res) => {
 });
 
 // Flight controller endpoints
-app.post('/flight/takeoff', async (req, res) => {
+app.post('/flight/takeoff', sanitizeInput, async (req, res) => {
     try {
         const { drone_id, altitude } = req.body;
 
@@ -51,7 +53,7 @@ app.post('/flight/takeoff', async (req, res) => {
     }
 });
 
-app.post('/flight/land', async (req, res) => {
+app.post('/flight/land', sanitizeInput, async (req, res) => {
     try {
         const { drone_id } = req.body;
 
@@ -76,7 +78,7 @@ app.post('/flight/land', async (req, res) => {
     }
 });
 
-app.post('/flight/navigate', async (req, res) => {
+app.post('/flight/navigate', sanitizeInput, async (req, res) => {
     try {
         const { drone_id, coordinates, altitude } = req.body;
 

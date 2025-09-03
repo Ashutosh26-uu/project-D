@@ -14,7 +14,7 @@ import uuid
 import random
 import base64
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 app = FastAPI()
 
@@ -138,7 +138,7 @@ def health():
 def jwt_auth(req: AuthRequest):
     # Stub: always return a fake JWT
     fake_jwt = f"jwt-token-for-{req.username}-{int(time.time())}"
-    return {"token": fake_jwt, "expires": (datetime.now() + timedelta(hours=24)).isoformat()}
+    return {"token": fake_jwt, "expires": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()}
 
 @app.post("/encrypt/aes256")
 def encrypt_aes256(req: EncryptRequest):

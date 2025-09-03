@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "drone-surveillance/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "drone-surveillance/dist"
+      }
+    },
+    {
+      "src": "api/index.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/ai.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/drone-surveillance/$1"
+    }
+  ],
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 30
+    },
+    "api/ai.py": {
+      "maxDuration": 60
+    }
+  },
+  "installCommand": "cd drone-surveillance && npm install",
+  "buildCommand": "cd drone-surveillance && npm run build",
+  "outputDirectory": "drone-surveillance/dist"
+}

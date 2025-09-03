@@ -10,11 +10,17 @@
     },
     {
       "src": "api/index.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "maxDuration": 30
+      }
     },
     {
       "src": "api/ai.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "maxDuration": 60
+      }
     }
   ],
   "routes": [
@@ -27,14 +33,6 @@
       "dest": "/drone-surveillance/$1"
     }
   ],
-  "functions": {
-    "api/index.js": {
-      "maxDuration": 30
-    },
-    "api/ai.py": {
-      "maxDuration": 60
-    }
-  },
   "installCommand": "cd drone-surveillance && npm install",
   "buildCommand": "cd drone-surveillance && npm run build",
   "outputDirectory": "drone-surveillance/dist"

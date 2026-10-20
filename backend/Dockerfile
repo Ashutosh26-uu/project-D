@@ -1,19 +1,16 @@
-FROM node:20-alpine
+FROM node:22-alpine
 
+ENV NODE_ENV=production
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
 
-# Install dependencies
-RUN npm install
+COPY src ./src
 
-# Copy the rest of the application
-COPY . .
-
-# Expose the ports
+USER node
 EXPOSE 5000
-EXPOSE 8080
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=5 \
+    CMD wget -qO- http://127.0.0.1:5000/api/health >/dev/null || exit 1
 
-# Start the application
-CMD ["npm", "run", "start"]
+CMD ["node", "src/server.js"]

@@ -1,235 +1,50 @@
-# Core stack: docker compose up mongodb ai_inference backend frontend
-
-networks:
-  drone-network:
-    driver: bridge
+name: drone-ops
 
 services:
-  # MongoDB Database
   mongodb:
-    image: mongo:latest
-    container_name: drone-mongodb
-    ports:
-      - "27017:27017"
+    image: mongo:7
     volumes:
       - mongodb_data:/data/db
-    environment:
-      - MONGO_INITDB_DATABASE=drone_fleet
-    networks:
-      - drone-network
-    restart: unless-stopped
-
-  # Redis for caching and session management
-  redis:
-    image: redis:alpine
-    container_name: drone-redis
-    ports:
-      - "6379:6379"
-    networks:
-      - drone-network
-    restart: unless-stopped
-
-  # Backend Main Server
-  backend:
-    build: 
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: drone-backend
-    ports:
-      - "5000:5000"
-      - "8080:8080"
-      - "8090:8090"
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-      - ./uploads:/app/uploads
-    environment:
-      - NODE_ENV=development
-      - PORT=5000
-      - WEBSOCKET_PORT=8080
-      - TELEMETRY_PORT=8090
-      - MONGODB_URI=mongodb://mongodb:27017/drone_fleet
-      - REDIS_URL=redis://redis:6379
-      - FLIGHT_CONTROLLER_URL=http://flight_controller_bridge:5100
-      - MISSION_PLANNER_URL=http://mission_planner:5200
-      - SENSOR_FUSION_URL=http://sensor_fusion:5300
-      - SWARM_COMM_BROKER_URL=http://swarm_comm_broker:5401
-      - SECURITY_LAYER_URL=http://security_layer:5450
-      - LATENCY_PREDICTOR_URL=http://latency_predictor:5500
-      - VIDEO_ENCRYPTION_URL=http://video_encryption:5600
-      - SWARM_AI_URL=http://swarm_ai:5700
-      - AI_INFERENCE_URL=http://ai_inference:5800
-    # Only the core services are hard dependencies; the other microservices are optional
-    depends_on:
-      mongodb:
-        condition: service_started
-      ai_inference:
-        condition: service_healthy
-    networks:
-      - drone-network
-    restart: unless-stopped
-
-  # AI Inference Service
-  ai_inference:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.ai
-    container_name: drone-ai-inference
-    ports:
-      - "5800:5800"
-    environment:
-      - AI_INFERENCE_PORT=5800
-      - MODEL_PATH=/app/yolov8n.pt
-      - BACKEND_URL=http://backend:5000
-      - WEBSOCKET_URL=ws://backend:8080
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:5800/health"]
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 10s
       timeout: 5s
-      retries: 12
-      start_period: 30s
-    networks:
-      - drone-network
+      retries: 10
     restart: unless-stopped
 
-  # Microservices
-  flight_controller_bridge:
-    build: 
-      context: ./backend/flight_controller_bridge
-      dockerfile: Dockerfile
-    container_name: drone-flight-controller
-    ports:
-      - "5100:5100"
+  ai:
+    build: ./ai-service
     environment:
-      - PORT=5100
-      - BACKEND_URL=http://backend:5000
-    networks:
-      - drone-network
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:?set AI_SERVICE_TOKEN in .env}
+      MAX_CONCURRENCY: ${AI_MAX_CONCURRENCY:-2}
     restart: unless-stopped
 
-  mission_planner:
-    build: 
-      context: ./backend/mission_planner
-      dockerfile: Dockerfile
-    container_name: drone-mission-planner
-    ports:
-      - "5200:5200"
+  backend:
+    build: ./backend
     environment:
-      - PORT=5200
-      - BACKEND_URL=http://backend:5000
-    networks:
-      - drone-network
-    restart: unless-stopped
-
-  sensor_fusion:
-    build: 
-      context: ./backend/sensor_fusion
-      dockerfile: Dockerfile
-    container_name: drone-sensor-fusion
-    ports:
-      - "5300:5300"
-    environment:
-      - PORT=5300
-      - BACKEND_URL=http://backend:5000
-    networks:
-      - drone-network
-    restart: unless-stopped
-
-  swarm_comm_broker:
-    build: 
-      context: ./backend/swarm_comm_broker
-      dockerfile: Dockerfile
-    container_name: drone-swarm-comm
-    ports:
-      - "5400:5400"
-      - "5401:5401"
-    environment:
-      - PORT=5400
-      - WEBSOCKET_PORT=5401
-      - BACKEND_URL=http://backend:5000
-    networks:
-      - drone-network
-    restart: unless-stopped
-
-  security_layer:
-    build: 
-      context: ./backend/security_layer
-      dockerfile: Dockerfile
-    container_name: drone-security
-    ports:
-      - "5450:5450"
-    environment:
-      - PORT=5450
-      - BACKEND_URL=http://backend:5000
-    networks:
-      - drone-network
-    restart: unless-stopped
-
-  latency_predictor:
-    build: 
-      context: ./backend/latency_predictor
-      dockerfile: Dockerfile
-    container_name: drone-latency-predictor
-    ports:
-      - "5500:5500"
-    environment:
-      - PORT=5500
-      - BACKEND_URL=http://backend:5000
-    networks:
-      - drone-network
-    restart: unless-stopped
-
-  video_encryption:
-    build: 
-      context: ./backend/video_encryption
-      dockerfile: Dockerfile
-    container_name: drone-video-encryption
-    ports:
-      - "5600:5600"
-    environment:
-      - PORT=5600
-      - BACKEND_URL=http://backend:5000
-    networks:
-      - drone-network
-    restart: unless-stopped
-
-  swarm_ai:
-    build: 
-      context: ./backend/swarm_ai
-      dockerfile: Dockerfile
-    container_name: drone-swarm-ai
-    ports:
-      - "5700:5700"
-    environment:
-      - PORT=5700
-      - BACKEND_URL=http://backend:5000
-      - AI_INFERENCE_URL=http://ai_inference:5800
-    networks:
-      - drone-network
-    restart: unless-stopped
-
-  # Frontend React Application
-  frontend:
-    build: 
-      context: ./drone-surveillance
-      dockerfile: Dockerfile
-    container_name: drone-frontend
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./drone-surveillance:/app
-      - /app/node_modules
-    environment:
-      - VITE_API_BASE_URL=http://localhost:5000
-      - VITE_WEBSOCKET_URL=ws://localhost:8080
-      - VITE_AI_INFERENCE_URL=http://localhost:5800
-      - NODE_ENV=development
+      MONGODB_URI: mongodb://mongodb:27017/drone_fleet
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      AI_SERVICE_URL: http://ai:8000
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN}
+      CORS_ORIGIN: ${PUBLIC_URL:-http://localhost:8080}
+      ALERT_CLASSES: ${ALERT_CLASSES:-person,car,truck,bus,motorcycle,airplane,boat}
     depends_on:
-      - backend
-    networks:
-      - drone-network
+      mongodb:
+        condition: service_healthy
+      ai:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
   mongodb_data:
-    driver: local

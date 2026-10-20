@@ -1,7 +1,8 @@
-node_modules
+node_modules/
+dist/
 .venv/
 __pycache__/
 *.pyc
-backend/uploads/
-uploads/
-dist/
+.pytest_cache/
+.env
+!.env.example

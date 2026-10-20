@@ -1,41 +1,32 @@
 {
-  "name": "drone-surveillance-backend",
-  "version": "1.0.0",
-  "description": "Advanced Drone Surveillance System Backend",
-  "main": "index.js",
+  "name": "drone-backend",
+  "version": "2.0.0",
+  "private": true,
+  "description": "API and realtime gateway for the drone surveillance system",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "jest"
+    "start": "node src/server.js",
+    "dev": "node --watch --env-file-if-exists=.env src/server.js",
+    "test": "node --test --test-concurrency=1 \"tests/**/*.test.js\""
+  },
+  "engines": {
+    "node": ">=22"
   },
   "dependencies": {
-    "axios": "^1.10.0",
-    "bcryptjs": "^2.4.3",
-    "compression": "^1.7.4",
-    "cors": "^2.8.5",
-    "dotenv": "^16.6.1",
-    "express": "^4.18.2",
-    "express-rate-limit": "^7.1.5",
-    "helmet": "^7.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.16.3",
-    "morgan": "^1.10.0",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.11.2",
+    "morgan": "^1.12.1",
     "multer": "^2.4.0",
-    "redis": "^4.6.10",
-    "ws": "^8.14.2"
+    "ws": "^8.22.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
-    "nodemon": "^3.0.2"
-  },
-  "keywords": [
-    "drone",
-    "surveillance",
-    "ai",
-    "military",
-    "defense",
-    "security"
-  ],
-  "author": "Drone Surveillance Team",
-  "license": "MIT"
+    "mongodb-memory-server": "^10.4.3",
+    "supertest": "^7.3.1"
+  }
 }

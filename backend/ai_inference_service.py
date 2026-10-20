@@ -13,8 +13,7 @@ import asyncio
 import threading
 import time
 import json
-import websockets
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import uvicorn
@@ -43,16 +42,18 @@ app.add_middleware(
 )
 
 # Configuration
-PORT = int(os.getenv('PORT', 5800))
-MODEL_PATH = os.getenv('MODEL_PATH', '/app/yolov8n.pt')
-BACKEND_URL = os.getenv('BACKEND_URL', 'http://backend:5000')
-WEBSOCKET_URL = os.getenv('WEBSOCKET_URL', 'ws://backend:8080')
+# Not PORT: load_dotenv() reads backend/.env, whose PORT belongs to the Node backend
+PORT = int(os.getenv('AI_INFERENCE_PORT', 5800))
+MODEL_PATH = os.getenv('MODEL_PATH', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'yolov8n.pt'))
+BACKEND_URL = os.getenv('BACKEND_URL', 'http://localhost:5000')
+# Set to an empty string to disable the backend WebSocket link
+WEBSOCKET_URL = os.getenv('WEBSOCKET_URL', 'ws://localhost:8080')
 
 # Pydantic models for request/response
 class DetectionRequest(BaseModel):
     image: str  # base64 encoded image
-    drone_id: str = None
-    timestamp: float = None
+    drone_id: Optional[str] = None
+    timestamp: Optional[float] = None
 
 class DetectionResponse(BaseModel):
     success: bool
@@ -92,7 +93,9 @@ class AIInferenceService:
         self.model = None
         self.load_model()
         self.backend_ws = None
-        self.setup_backend_websocket()
+        self.backend_ws_connected = False
+        if WEBSOCKET_URL:
+            self.setup_backend_websocket()
     
     def load_model(self):
         """Load YOLOv8 model"""
@@ -104,7 +107,7 @@ class AIInferenceService:
             model = self.model
         except Exception as e:
             logger.error(f"Error loading model: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Model loading failed: {str(e)}")
+            raise
     
     def setup_backend_websocket(self):
         """Setup WebSocket connection to backend"""
@@ -116,7 +119,8 @@ class AIInferenceService:
                     try:
                         data = json.loads(message)
                         if data.get('type') == 'detection_request':
-                            asyncio.create_task(self.process_detection_request(data))
+                            # Runs on the websocket-client thread; there is no asyncio loop here
+                            self.process_detection_request(data)
                     except Exception as e:
                         logger.error(f"WebSocket message error: {str(e)}")
                 
@@ -124,9 +128,11 @@ class AIInferenceService:
                     logger.error(f"WebSocket error: {error}")
                 
                 def on_close(ws, close_status_code, close_msg):
+                    self.backend_ws_connected = False
                     logger.info("Backend WebSocket connection closed")
                 
                 def on_open(ws):
+                    self.backend_ws_connected = True
                     logger.info("Backend WebSocket connection opened")
                     # Register as AI service
                     ws.send(json.dumps({
@@ -143,7 +149,8 @@ class AIInferenceService:
                     on_close=on_close
                 )
                 
-                self.backend_ws.run_forever()
+                # Retry until the backend is reachable (it may start after this service)
+                self.backend_ws.run_forever(reconnect=5)
                 
             except Exception as e:
                 logger.error(f"WebSocket setup error: {str(e)}")
@@ -153,7 +160,7 @@ class AIInferenceService:
         ws_thread.daemon = True
         ws_thread.start()
     
-    async def process_detection_request(self, data):
+    def process_detection_request(self, data):
         """Process detection request from WebSocket"""
         try:
             image_data = data.get('image')
@@ -168,7 +175,7 @@ class AIInferenceService:
                 results = self.detect_objects(image)
                 
                 # Send results back via WebSocket
-                if self.backend_ws:
+                if self.backend_ws and self.backend_ws_connected:
                     response = {
                         'type': 'detection_results',
                         'drone_id': drone_id,
@@ -183,11 +190,9 @@ class AIInferenceService:
     def detect_objects(self, image):
         """Perform object detection on image"""
         try:
-            # Convert PIL image to numpy array
-            img_array = np.array(image)
-            
-            # Run YOLOv8 inference
-            results = self.model(img_array)
+            # Pass the PIL image directly: ultralytics treats numpy arrays as BGR,
+            # and RGBA/greyscale inputs need converting to RGB first
+            results = self.model(image.convert("RGB"), verbose=False)
             
             detections = []
             for result in results:
@@ -198,7 +203,7 @@ class AIInferenceService:
                         x1, y1, x2, y2 = box.xyxy[0].tolist()
                         confidence = float(box.conf[0])
                         class_id = int(box.cls[0])
-                        class_name = COCO_CLASSES[class_id] if class_id < len(COCO_CLASSES) else str(class_id)
+                        class_name = self.model.names.get(class_id, str(class_id))
                         
                         # Military asset classification
                         threat_level = self.classify_threat_level(class_name, confidence)
@@ -284,7 +289,7 @@ async def health_check():
     }
 
 @app.post("/detect", response_model=DetectionResponse)
-async def detect_objects_endpoint(request: DetectionRequest):
+def detect_objects_endpoint(request: DetectionRequest):
     """Object detection endpoint"""
     try:
         if not request.image:
@@ -304,9 +309,11 @@ async def detect_objects_endpoint(request: DetectionRequest):
             timestamp=time.time()
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Detection endpoint error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=400, detail=f"Invalid image data: {str(e)}")
 
 @app.post("/analyze")
 async def analyze_with_image(file: UploadFile = File(...), return_image: bool = False):
@@ -361,8 +368,8 @@ async def model_info():
             return {
                 'model_path': MODEL_PATH,
                 'model_type': 'YOLOv8',
-                'classes': COCO_CLASSES,
-                'num_classes': len(COCO_CLASSES)
+                'classes': list(ai_service.model.names.values()),
+                'num_classes': len(ai_service.model.names)
             }
         else:
             raise HTTPException(status_code=500, detail="Model not loaded")
@@ -415,7 +422,7 @@ async def get_stats():
         'service': 'ai_inference_fastapi',
         'status': 'running',
         'model_loaded': ai_service.model is not None,
-        'backend_ws_connected': ai_service.backend_ws is not None,
+        'backend_ws_connected': ai_service.backend_ws_connected,
         'port': PORT,
         'timestamp': time.time()
     }

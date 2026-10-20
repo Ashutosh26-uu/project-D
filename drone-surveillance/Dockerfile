@@ -2,20 +2,13 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
-
-# Install dependencies
+# .npmrc enables legacy-peer-deps (some deps still declare React <=18 peers)
+COPY package*.json .npmrc ./
 RUN npm install
 
-# Copy the rest of the application
 COPY . .
 
-# Build the application
-RUN npm run build
-
-# Expose the port
 EXPOSE 3000
 
-# Start the application
+# Development server (hot reload); use `npm run build` for a production bundle
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

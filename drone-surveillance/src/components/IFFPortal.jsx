@@ -1,5 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const WS_BASE_URL = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:8080';
+
 const IFFPortal = () => {
   const [drones, setDrones] = useState([]);
   const [targets, setTargets] = useState([]);
@@ -95,7 +98,7 @@ const IFFPortal = () => {
     setTargets(unknownTargets);
 
     // WebSocket connection for real-time updates
-    wsRef.current = new WebSocket('ws://localhost:8080');
+    wsRef.current = new WebSocket(WS_BASE_URL);
     wsRef.current.onopen = () => {
       wsRef.current.send(JSON.stringify({ type: 'register', role: 'iff_client' }));
     };
@@ -144,7 +147,7 @@ const IFFPortal = () => {
 
   const tagTarget = async (targetId, newIffStatus) => {
     try {
-      const res = await fetch('http://localhost:5000/api/iff/tag', {
+      const res = await fetch(`${API_BASE_URL}/api/iff/tag`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

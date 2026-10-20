@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import encryptionService from '../utils/encryption';
 
+const WS_BASE_URL = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:8080';
+
 const SecureCommunicationPortal = () => {
   const [activeTab, setActiveTab] = useState('messaging');
   const [messages, setMessages] = useState([]);
@@ -40,7 +42,7 @@ const SecureCommunicationPortal = () => {
 
   const initializeSecureCommunication = () => {
     // Simulate secure WebSocket connection
-    wsRef.current = new WebSocket('wss://localhost:8080/secure-comm');
+    wsRef.current = new WebSocket(`${WS_BASE_URL}/secure-comm`);
     
     wsRef.current.onopen = () => {
       console.log('Secure communication channel established');

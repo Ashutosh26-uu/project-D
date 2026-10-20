@@ -1,4 +1,4 @@
-version: '3.8'
+# Core stack: docker compose up mongodb ai_inference backend frontend
 
 networks:
   drone-network:
@@ -53,24 +53,18 @@ services:
       - FLIGHT_CONTROLLER_URL=http://flight_controller_bridge:5100
       - MISSION_PLANNER_URL=http://mission_planner:5200
       - SENSOR_FUSION_URL=http://sensor_fusion:5300
-      - SWARM_COMM_BROKER_URL=http://swarm_comm_broker:5400
+      - SWARM_COMM_BROKER_URL=http://swarm_comm_broker:5401
       - SECURITY_LAYER_URL=http://security_layer:5450
       - LATENCY_PREDICTOR_URL=http://latency_predictor:5500
       - VIDEO_ENCRYPTION_URL=http://video_encryption:5600
       - SWARM_AI_URL=http://swarm_ai:5700
       - AI_INFERENCE_URL=http://ai_inference:5800
+    # Only the core services are hard dependencies; the other microservices are optional
     depends_on:
-      - mongodb
-      - redis
-      - flight_controller_bridge
-      - mission_planner
-      - sensor_fusion
-      - swarm_comm_broker
-      - security_layer
-      - latency_predictor
-      - video_encryption
-      - swarm_ai
-      - ai_inference
+      mongodb:
+        condition: service_started
+      ai_inference:
+        condition: service_healthy
     networks:
       - drone-network
     restart: unless-stopped
@@ -83,13 +77,17 @@ services:
     container_name: drone-ai-inference
     ports:
       - "5800:5800"
-    volumes:
-      - ./backend:/app
-      - ./backend/yolov8n.pt:/app/yolov8n.pt
     environment:
-      - FLASK_ENV=development
-      - PORT=5800
+      - AI_INFERENCE_PORT=5800
       - MODEL_PATH=/app/yolov8n.pt
+      - BACKEND_URL=http://backend:5000
+      - WEBSOCKET_URL=ws://backend:8080
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5800/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - drone-network
     restart: unless-stopped
@@ -228,7 +226,6 @@ services:
       - NODE_ENV=development
     depends_on:
       - backend
-      - ai_inference
     networks:
       - drone-network
     restart: unless-stopped

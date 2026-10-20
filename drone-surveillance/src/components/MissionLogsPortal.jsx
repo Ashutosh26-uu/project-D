@@ -1,23 +1,25 @@
 import React, { useEffect, useState } from 'react';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 const MissionLogsPortal = () => {
   const [missions, setMissions] = useState([]);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/missions/list')
+    fetch(`${API_BASE_URL}/api/missions/list`)
       .then(res => res.json())
       .then(data => setMissions(data.missions || []));
   }, []);
 
   const replayMission = async (id) => {
-    const res = await fetch(`http://localhost:5000/api/missions/${id}/replay`);
+    const res = await fetch(`${API_BASE_URL}/api/missions/${id}/replay`);
     const data = await res.json();
     setMessage(data.success ? 'Replay started!' : 'Failed to replay');
   };
 
   const exportMission = async (id, format) => {
-    const res = await fetch(`http://localhost:5000/api/missions/${id}/export?format=${format}`);
+    const res = await fetch(`${API_BASE_URL}/api/missions/${id}/export?format=${format}`);
     const data = await res.json();
     setMessage(data.success ? `Exported as ${format}` : 'Failed to export');
   };

@@ -22,12 +22,12 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: process.env.VITE_API_URL || 'http://localhost:5000',
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:5000',
         changeOrigin: true,
         secure: false
       },
       '/ws': {
-        target: process.env.VITE_WS_URL || 'ws://localhost:8080',
+        target: process.env.VITE_WEBSOCKET_URL || 'ws://localhost:8080',
         ws: true,
         changeOrigin: true
       }

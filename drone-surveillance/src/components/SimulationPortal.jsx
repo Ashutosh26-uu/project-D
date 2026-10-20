@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 const SimulationPortal = () => {
   const [mode, setMode] = useState('live');
   const [virtualDrones, setVirtualDrones] = useState([]);
@@ -7,7 +9,7 @@ const SimulationPortal = () => {
   const [message, setMessage] = useState('');
 
   const toggleMode = async (newMode) => {
-    const res = await fetch('http://localhost:5000/api/sim/toggle', {
+    const res = await fetch(`${API_BASE_URL}/api/sim/toggle`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mode: newMode })
@@ -18,10 +20,10 @@ const SimulationPortal = () => {
   };
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/sim/virtual-drones')
+    fetch(`${API_BASE_URL}/api/sim/virtual-drones`)
       .then(res => res.json())
       .then(data => setVirtualDrones(data.drones || []));
-    fetch('http://localhost:5000/api/sim/mock-detections')
+    fetch(`${API_BASE_URL}/api/sim/mock-detections`)
       .then(res => res.json())
       .then(data => setDetections(data.detections || []));
   }, [mode]);

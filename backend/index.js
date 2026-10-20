@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
-const { spawn } = require('child_process');
+const fs = require('fs');
 const WebSocket = require('ws');
 require('dotenv').config();
 const mongoose = require('mongoose');
@@ -12,11 +12,11 @@ const { authenticateToken, csrfProtection, sanitizeInput } = require('./middlewa
 // Connect to MongoDB
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/drone_fleet';
 console.log(`Connecting to MongoDB at: ${MONGODB_URI}`);
-mongoose.connect(MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-  .then(() => console.log('MongoDB connected successfully'))
+mongoose.connect(MONGODB_URI)
+  .then(() => {
+    console.log('MongoDB connected successfully');
+    return seedDemoFleet();
+  })
   .catch((err) => console.error('MongoDB connection error:', err));
 
 const app = express();
@@ -36,8 +36,11 @@ const serviceUrls = {
   latencyPredictor: process.env.LATENCY_PREDICTOR_URL || 'http://latency_predictor:5500',
   videoEncryption: process.env.VIDEO_ENCRYPTION_URL || 'http://video_encryption:5600',
   swarmAI: process.env.SWARM_AI_URL || 'http://swarm_ai:5700',
-  aiInference: process.env.AI_INFERENCE_URL || 'http://ai_inference:5800'
+  aiInference: process.env.AI_INFERENCE_URL || 'http://localhost:5800'
 };
+
+// Escape user input before embedding it in a RegExp
+const escapeRegExp = (str) => String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 console.log('Service URLs configured:', serviceUrls);
 
@@ -46,8 +49,6 @@ const wss = new WebSocket.Server({ port: WEBSOCKET_PORT });
 
 // Map of droneId to WebSocket (for drones)
 const droneSockets = new Map();
-// Set of client sockets (for dashboards, etc.)
-const clientSockets = new Set();
 
 // Enhanced WebSocket handling for AI integration
 wss.on('connection', (ws, req) => {
@@ -72,6 +73,7 @@ wss.on('connection', (ws, req) => {
           await handleDetectionResults(ws, data);
           break;
         case 'telemetry_update':
+        case 'telemetry':
           await handleTelemetryUpdate(ws, data);
           break;
         default:
@@ -106,6 +108,39 @@ function handleServiceRegistration(ws, data) {
     service,
     status: 'registered'
   }));
+}
+
+// Drone registration handler
+function handleDroneRegistration(ws, data) {
+  const droneId = data.drone_id || data.droneId;
+  if (!droneId) {
+    ws.send(JSON.stringify({ type: 'error', message: 'drone_id required' }));
+    return;
+  }
+  droneSockets.set(droneId, { ws });
+  console.log(`Drone registered: ${encodeURIComponent(droneId)}`);
+  ws.send(JSON.stringify({ type: 'registration_confirmed', drone_id: droneId, status: 'registered' }));
+}
+
+// Telemetry handler: persist latest telemetry and fan out to dashboards
+async function handleTelemetryUpdate(ws, data) {
+  const droneId = data.drone_id || data.droneId;
+  const telemetry = data.telemetry || {};
+  if (!droneId) return;
+
+  const update = {};
+  for (const key of ['battery', 'altitude', 'speed', 'signal', 'heading', 'orientation', 'mode']) {
+    if (telemetry[key] !== undefined) update[`telemetry.${key}`] = telemetry[key];
+  }
+  const location = data.location || telemetry;
+  if (typeof location.lat === 'number') update['location.lat'] = location.lat;
+  if (typeof location.lng === 'number') update['location.lng'] = location.lng;
+
+  if (Object.keys(update).length > 0) {
+    await Drone.updateOne({ name: new RegExp(`^${escapeRegExp(droneId)}$`, 'i') }, { $set: update });
+  }
+
+  broadcastToClients({ type: 'telemetry', droneId, ...telemetry, location: data.location, timestamp: Date.now() });
 }
 
 // Detection request handler
@@ -162,7 +197,7 @@ async function handleDetectionResults(ws, data) {
     });
 
     // Trigger threat analysis if high-threat objects detected
-    const highThreatDetections = results.filter(r => r.threat_level === 'high');
+    const highThreatDetections = Array.isArray(results) ? results.filter(r => r.threat_level === 'high') : [];
     if (highThreatDetections.length > 0) {
       await triggerThreatResponse(drone_id, highThreatDetections);
     }
@@ -175,26 +210,11 @@ async function handleDetectionResults(ws, data) {
 // Store detection results in database
 async function storeDetectionResults(droneId, detections) {
   try {
-    const drone = await Drone.findOne({ name: droneId });
-    if (drone) {
-      // Update drone with latest detections
-      drone.detections = detections;
-      drone.lastDetectionTime = new Date();
-      await drone.save();
-
-      // Store individual detection records
-      for (const detection of detections) {
-        const detectionRecord = {
-          droneId,
-          detection,
-          timestamp: new Date(),
-          threatLevel: detection.threat_level
-        };
-
-        // You can create a Detection model and save here
-        console.log('Detection stored:', detectionRecord);
-      }
-    }
+    if (!droneId || !Array.isArray(detections)) return;
+    await Drone.updateOne(
+      { name: new RegExp(`^${escapeRegExp(droneId)}$`, 'i') },
+      { $set: { lastDetection: { detections, timestamp: new Date() } } }
+    );
   } catch (error) {
     console.error('Error storing detection results:', error);
   }
@@ -204,13 +224,6 @@ async function storeDetectionResults(droneId, detections) {
 async function triggerThreatResponse(droneId, threats) {
   try {
     console.log(`High threat detected by drone ${encodeURIComponent(droneId)}:`, JSON.stringify(threats));
-
-    // Notify security layer
-    await axios.post(`${serviceUrls.securityLayer}/threat-alert`, {
-      drone_id: droneId,
-      threats,
-      timestamp: new Date().toISOString()
-    });
 
     // Broadcast threat alert
     broadcastToClients({
@@ -260,9 +273,20 @@ function cleanupConnections(ws) {
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '25mb' })); // base64 images for /api/ai/analyze-batch
 app.use(sanitizeInput); // Apply input sanitization globally
-app.use('/uploads', express.static('uploads'));
+
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+app.use('/uploads', express.static(UPLOADS_DIR));
+
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // CSRF token generation endpoint
 app.get('/api/csrf-token', (req, res) => {
@@ -275,7 +299,7 @@ app.get('/api/csrf-token', (req, res) => {
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/');
+    cb(null, UPLOADS_DIR);
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -283,7 +307,23 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage, limits: { fileSize: 50 * 1024 * 1024 } });
+
+// Images for AI inference are kept in memory and never written to disk
+const imageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => cb(null, /^image\//.test(file.mimetype)),
+});
+
+// Send an uploaded image to the YOLOv8 inference service
+async function runInference(file, droneId) {
+  const response = await axios.post(`${serviceUrls.aiInference}/detect`, {
+    image: file.buffer.toString('base64'),
+    drone_id: droneId || null,
+  }, { timeout: 60000, maxBodyLength: Infinity, maxContentLength: Infinity });
+  return response.data;
+}
 
 // --- WebSocket Real-Time Per-Drone Logic ---
 /**
@@ -336,94 +376,57 @@ app.get('/', (req, res) => {
   res.json({ message: 'Advanced Drone Surveillance API' });
 });
 
-// AI Detection endpoint (per-drone, via FastAPI)
-app.post('/api/detect', authenticateToken, upload.single('image'), async (req, res) => {
+// AI Detection endpoint (per-drone, via the YOLOv8 inference service)
+app.post('/api/detect', imageUpload.single('image'), async (req, res) => {
+  const { droneId } = req.body;
+  if (!req.file) {
+    return res.status(400).json({ error: 'An image file is required' });
+  }
+  let result;
   try {
-    const { droneId, lat, lng, timestamp } = req.body;
-    if (!req.file) {
-      return res.status(400).json({ error: 'Image is required' });
-    }
-    const imagePath = req.file.path;
-    // Forward to FastAPI /detect (YOLOv8)
-    const FormData = require('form-data');
-    const formData = new FormData();
-    formData.append('file', require('fs').createReadStream(imagePath));
-    if (lat) formData.append('lat', lat);
-    if (lng) formData.append('long', lng);
-    if (timestamp) formData.append('timestamp', timestamp);
-    const fastApiUrl = 'http://localhost:8001/detect';
-    let response, detections;
-    try {
-      response = await axios.post(fastApiUrl, formData, {
-        headers: formData.getHeaders(),
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
-      });
-      detections = response.data;
-    } catch (err) {
-      console.error('Error forwarding to FastAPI:', err.response ? err.response.data : err.message);
-      return res.status(500).json({ error: 'Failed to connect to AI detection service', details: err.message });
-    }
-    // Optionally store detection in drone DB if droneId is provided
-    if (droneId) {
-      await Drone.findOneAndUpdate(
-        { name: new RegExp(`^${droneId}$`, 'i') },
-        { $set: { lastDetection: detections } },
-        { new: true }
-      );
-    }
-    // Broadcast detection via WebSocket
-    clientSockets.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({
-          type: 'detection',
-          droneId: droneId || null,
-          detections,
-        }));
-      }
-    });
-    res.json({ success: true, droneId: droneId || null, detections });
+    result = await runInference(req.file, droneId);
+  } catch (err) {
+    console.error('Error forwarding to AI service:', err.response ? err.response.data : err.message);
+    return res.status(502).json({ error: 'Failed to connect to AI detection service' });
+  }
+  const detections = result.detections || [];
+  try {
+    if (droneId) await storeDetectionResults(droneId, detections);
+    broadcastToClients({ type: 'detection', droneId: droneId || null, detections });
+    res.json({ success: true, droneId: droneId || null, detections, count: detections.length });
   } catch (error) {
     console.error('Detection error:', error);
-    res.status(500).json({ error: 'Detection failed', details: error.message });
+    res.status(500).json({ error: 'Detection failed' });
   }
 });
 
-// AI Description endpoint (per-drone, via FastAPI)
-app.post('/api/describe', upload.single('image'), async (req, res) => {
+// AI Description endpoint: summarises the detections in plain language
+app.post('/api/describe', imageUpload.single('image'), async (req, res) => {
+  const { droneId } = req.body;
+  if (!req.file) {
+    return res.status(400).json({ error: 'An image file is required' });
+  }
+  let result;
   try {
-    const { droneId } = req.body;
-    if (!req.file || !droneId) {
-      return res.status(400).json({ error: 'Image and droneId required' });
+    result = await runInference(req.file, droneId);
+  } catch (err) {
+    console.error('Error forwarding to AI service:', err.response ? err.response.data : err.message);
+    return res.status(502).json({ error: 'Failed to connect to AI detection service' });
+  }
+  const detections = result.detections || [];
+  const counts = {};
+  for (const d of detections) counts[d.class_name] = (counts[d.class_name] || 0) + 1;
+  const parts = Object.entries(counts).map(([name, n]) => `${n} ${name}${n > 1 ? 's' : ''}`);
+  const description = parts.length ? `Detected ${parts.join(', ')}.` : 'No objects detected.';
+  try {
+    if (droneId) {
+      await Drone.updateOne(
+        { name: new RegExp(`^${escapeRegExp(droneId)}$`, 'i') },
+        { $set: { lastDescription: { description, detections, timestamp: new Date() } } }
+      );
     }
-    const imagePath = req.file.path;
-    // Forward to FastAPI /describe
-    const formData = new FormData();
-    formData.append('file', require('fs').createReadStream(imagePath));
-    const fastApiUrl = process.env.FASTAPI_URL_DESCRIBE || 'http://localhost:8000/describe';
-    const response = await axios.post(fastApiUrl, formData, {
-      headers: formData.getHeaders(),
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity,
-    });
-    const description = response.data;
-    // Store description in drone DB
-    await Drone.findOneAndUpdate(
-      { name: new RegExp(`^${droneId}$`, 'i') },
-      { $set: { lastDescription: description } },
-      { new: true }
-    );
-    // Broadcast description via WebSocket
-    clientSockets.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({
-          type: 'description',
-          droneId,
-          description,
-        }));
-      }
-    });
-    res.json({ success: true, droneId, description });
+    broadcastToClients({ type: 'description', droneId: droneId || null, description });
+    res.json({ success: true, droneId: droneId || null, description, detections });
   } catch (error) {
     console.error('Description error:', error);
     res.status(500).json({ error: 'Description failed' });
@@ -641,7 +644,6 @@ async function seedDemoFleet() {
     console.log('Demo drone fleet seeded');
   }
 }
-seedDemoFleet();
 
 // List all drones
 app.get('/api/drones', async (req, res) => {
@@ -807,11 +809,6 @@ app.get('/api/sim/mock-detections', (req, res) => {
   });
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
-});
 
 // Enhanced API endpoints for AI integration
 
@@ -847,22 +844,13 @@ app.get('/api/ai/model-info', async (req, res) => {
 });
 
 // Manual detection endpoint
-app.post('/api/ai/detect', upload.single('image'), async (req, res) => {
+app.post('/api/ai/detect', imageUpload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No image file provided' });
     }
 
-    // Convert image to base64
-    const imageBuffer = req.file.buffer || require('fs').readFileSync(req.file.path);
-    const base64Image = imageBuffer.toString('base64');
-
-    // Send to AI service
-    const response = await axios.post(`${serviceUrls.aiInference}/detect`, {
-      image: base64Image
-    });
-
-    res.json(response.data);
+    res.json(await runInference(req.file));
   } catch (error) {
     res.status(500).json({
       error: 'Detection failed',
@@ -920,7 +908,13 @@ app.get('/api/services/status', async (req, res) => {
   });
 });
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`WebSocket server running on port 8080`);
+  console.log(`WebSocket server running on port ${WEBSOCKET_PORT}`);
 });

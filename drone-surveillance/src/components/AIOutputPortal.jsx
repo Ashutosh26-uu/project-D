@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import useDroneWebSocket from '../hooks/useDroneWebSocket';
 
+const WS_BASE_URL = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:8080';
+
 const DEMO_AI_DATA = [
   { droneId: 'Pinaak-01', detection: 'Person', confidence: 0.92, time: '2024-06-01 12:01:23', alert: 'None', severity: 'Low', coordinates: '28.6139, 77.2090' },
   { droneId: 'Akash-02', detection: 'Vehicle', confidence: 0.87, time: '2024-06-01 12:01:25', alert: 'Suspicious Vehicle', severity: 'Medium', coordinates: '28.6129, 77.2080' },
@@ -8,7 +10,7 @@ const DEMO_AI_DATA = [
   { droneId: 'Arjun-04', detection: 'Unknown Object', confidence: 0.65, time: '2024-06-01 12:01:30', alert: 'Potential Threat', severity: 'High', coordinates: '28.6159, 77.2110' },
 ];
 
-const AI_WS_URL = 'ws://localhost:8080/ai';
+const AI_WS_URL = `${WS_BASE_URL}/ai`;
 
 export default function AIOutputPortal() {
   const [aiData, setAIData] = useState(DEMO_AI_DATA);

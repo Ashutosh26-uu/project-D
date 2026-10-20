@@ -16,6 +16,9 @@ import IntegrationPortal from './IntegrationPortal';
 import SwarmAISyncPortal from './SwarmAISyncPortal';
 import IFFPortal from './IFFPortal';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const WS_BASE_URL = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:8080';
+
 const DroneDashboard = (props) => {
   const { detections = [], airDefenses = [], radars = [], missiles = [], detectAirDefense, detectRadar, detectMissile } = props;
   const [drones, setDrones] = useState([
@@ -296,7 +299,7 @@ const DroneDashboard = (props) => {
     const formData = new FormData();
     formData.append('image', selectedFile);
     try {
-      const response = await fetch('http://localhost:5000/api/detect', {
+      const response = await fetch(`${API_BASE_URL}/api/detect`, {
         method: 'POST',
         body: formData,
       });
@@ -683,9 +686,14 @@ const DroneDashboard = (props) => {
 
   useEffect(() => {
     // WebSocket se real-time telemetry update (demo fallback)
-    const ws = new WebSocket('ws://localhost:8080');
+    const ws = new WebSocket(WS_BASE_URL);
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+      let data;
+      try {
+        data = JSON.parse(event.data);
+      } catch {
+        return;
+      }
       if (data.type === 'telemetry') {
         setTelemetry(prev => ({
           ...prev,
@@ -700,7 +708,7 @@ const DroneDashboard = (props) => {
   const wsControlRef = useRef(null);
 
   useEffect(() => {
-    wsControlRef.current = new WebSocket('ws://localhost:8080');
+    wsControlRef.current = new WebSocket(WS_BASE_URL);
     return () => wsControlRef.current && wsControlRef.current.close();
   }, []);
 
